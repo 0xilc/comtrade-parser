@@ -1,11 +1,8 @@
-const fs = require('fs');
-
 SEPERATOR = ','
 
-// Stands for reading cfg file and storing the configuration data
 class Configuration
 {
-    constructor(filepath)
+    constructor(configFile)
     {
         // Fields
         this.station_name       = null;
@@ -32,14 +29,14 @@ class Configuration
         this.ts_mul_fac         = null;
         
         // Read the file to initialize the fields
-        this.Read (filepath);
+        this.Read (configFile);
     }
     
-    Read (filepath)
+    Read (configFile)
     {
         let lineIndex = 0;
         let line;
-        const data = fs.readFileSync(filepath, 'utf8');
+        const data = configFile;
         const lines = data.split('\r\n');
 
         // First line
@@ -333,18 +330,18 @@ class Sample
 
 class Data
 {
-    constructor(config, filepath)
+    constructor(config, dataFile)
     {
         this.config = config;
         this.sample_size = 4 + 4 + config.analog_count * 2 + 2 * Math.ceil(config.status_count / 16);
         this.samples = [];
 
-        this.Read(filepath);
+        this.Read(dataFile);
     }
     
-    Read(filepath)
+    Read(dataFile)
     {
-        const data = fs.readFileSync(filepath);
+        const data = dataFile;
         const buffer = Buffer.from(data);
         
         for (let offset = 0; offset < buffer.length; offset += this.sample_size) 
@@ -389,10 +386,10 @@ class Data
 
 class ComtradeParser
 {
-    constructor(configFilePath, dataFilePath)
+    constructor(configFile, dataFile)
     {
-        this.config = new Configuration(configFilePath);
-        this.data = new Data(this.config, dataFilePath);
+        this.config = new Configuration(configFile);
+        this.data = new Data(this.config, dataFile);
     }
     getPrettyData()
     {
