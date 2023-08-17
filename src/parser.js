@@ -1,5 +1,5 @@
 const fs = require('fs');
-// COMMON
+
 SEPERATOR = ','
 
 // Stands for reading cfg file and storing the configuration data
@@ -240,14 +240,9 @@ class StatusChannel
 
 class TimeStamp
 {
-    constructor(day, month, year, hour, minutes, seconds)
+    constructor(time)
     {
-        this.day                = day;
-        this.month              = month;
-        this.year               = year;
-        this.hour               = hour;
-        this.minutes            = minutes;
-        this.seconds            = seconds;
+        this.time = time;
     }
 
     static fromLine(line)
@@ -255,73 +250,87 @@ class TimeStamp
         const parts = line.split(SEPERATOR);
         const [day, month, year] = parts[0].split('/').map(Number);
         const [hour, minutes, seconds] = parts[1].split(':').map(Number);
-        return new TimeStamp(day, month, year, hour, minutes, seconds);
+        const time = new Date(year, month, day, hour, minutes, seconds)
+        return new TimeStamp(time);
     }
 
     static fromBuffer(buffer, config) {
         const timestampValue = buffer.readUInt32LE(0);
         
         if (timestampValue === 0xFFFFFFFF) {
-            return new TimeStamp(null, null, null, null, null, null);
+            return new TimeStamp(null);
         }
 
         const timemult = config.ts_mul_fac;
-        const timestampMilliseconds = timestampValue * timemult;
+        const ms = timestampValue * timemult / 1000 + config.start_timestamp.time.getTime();
+        const time = new Date(ms); 
 
-        const date = new Date(timestampMilliseconds / 1000); // Convert to seconds
-        const day = date.getUTCDate();
-        const month = date.getUTCMonth() + 1; // Months are 0-based
-        const year = date.getUTCFullYear();
-        const hour = date.getUTCHours();
-        const minutes = date.getUTCMinutes();
-        const seconds = date.getUTCSeconds();
-
-        return new TimeStamp(day, month, year, hour, minutes, seconds);
+        return new TimeStamp(time);
     }
 }
 
 class Sample
 {
-    // Layout
-    /*
-        4byte           4byte       // 2byte                
-        sample_number   timestamp   Analog channel sample
-                                    (hex 8000 reserved for 
-                                     missing data) 
-
-        SAMPLE SIZE = 4 + 4 + A*2 + 2* INT(S/16) bytes
-    */
    constructor(buffer, config)
    {
         this.sample_number = null;
         this.timestamp = null;
-        this.analog_samples = [];
-        this.status_samples = [];
-        
+        this.analog_data = [];
+        this.status_data = [];
+        this.config = config;
+
         this.Read(buffer, config);
    }
 
-   Read(buffer, config)
+   Read(buffer)
    {
         // Sample number (4 bytes, little-endian)
         this.sample_number = buffer.readUInt32LE(0);
 
         // Timestamp (4 bytes, little-endian)
-        this.timestamp = TimeStamp.fromBuffer(buffer.subarray(4, 8), config);
+        this.timestamp = TimeStamp.fromBuffer(buffer.subarray(4, 8), this.config);
 
         // Analog channel sample data (2 bytes each)
-        for (let i = 8; i < 8 + config.analog_count * 2; i += 2) {
-            this.analog_samples.push(buffer.readInt16LE(i));
+        let p = 0;
+        for (let i = 8; i < 8 + this.config.analog_count * 2; i += 2) {
+            let data = this.config.analog_channels[p].a * buffer.readInt16LE(i) + this.config.analog_channels[p].b;
+            this.analog_data.push(data);
+            p++;
         }
 
-        // Status channel sample data (2 bytes each, grouped by 16 channels)
-        for (let i = 8 + config.analog_count * 2; i < buffer.length; i += 2) {
-            this.status_samples.push(buffer.readUInt16LE(i));
+        // Status channel sample data
+        p = 0;
+        for (let i = 8 + this.config.analog_count * 2; i < buffer.length; i += 2) {
+            // Read 2 bytes they represent 16 different status channels. Push them 1 or 0 to the status_data array
+            const statusByte = buffer.readUInt16LE(i);
+            for (let j = 0; p*16 + j < this.config.status_count; j++) {
+                this.status_data.push((statusByte >> j) & 1);
+            }
+            p+=1;
         }
    }
+   
+    getAnalogValue(n)
+    {
+        // n starts from 1
+        const result = {
+            timestamp: this.timestamp,
+            value: this.analog_data[n - 1]
+        }
+        return result;
+    }
+
+    getStatusValue(n)
+    {
+        // n starts from 1
+        const result = {
+            timestamp: this.timestamp,
+            value: this.status_data[n - 1]
+        }
+        return result;
+    }
 }
 
-// TODO : Optimize parameter passing
 class Data
 {
     constructor(config, filepath)
@@ -345,7 +354,50 @@ class Data
             this.samples.push(newSample);
         }
     }
+
+    getPrettyData()
+    {
+        let analogChannelsData = [];
+        let statusChannelsData = [];
+        this.config.analog_channels.forEach(analogChannel => {
+            let channelData = {
+                name: analogChannel.ch_id,
+                data: []
+            };
+            this.samples.forEach(sample => {
+                channelData.data.push(sample.getAnalogValue(analogChannel.n));
+            });
+            analogChannelsData.push(channelData);
+        });
+
+        this.config.status_channels.forEach(statusChannel => {
+            let channelData = {
+                name: statusChannel.ch_id,
+                data: []
+            };
+            this.samples.forEach(sample => {
+                channelData.data.push(sample.getStatusValue(statusChannel.n));
+            });
+            statusChannelsData.push(channelData);
+        });
+        return {
+            analogChannels: analogChannelsData,
+            statusChannels: statusChannelsData
+        }
+    }
 }
 
+class ComtradeParser
+{
+    constructor(configFilePath, dataFilePath)
+    {
+        this.config = new Configuration(configFilePath);
+        this.data = new Data(this.config, dataFilePath);
+    }
+    getPrettyData()
+    {
+        return this.data.getPrettyData();
+    }
+}
 
-module.exports = { StatusChannel, AnalogChannel, Configuration, Data };
+module.exports = {ComtradeParser, TimeStamp};
