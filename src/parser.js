@@ -4,29 +4,30 @@ class Configuration
 {
     constructor(configFile)
     {
+        /* */
         // Fields
-        this.station_name       = null;
-        this.rec_dev_id         = null;
-        this.rev_year           = null;
+        this.station_name       = undefined;
+        this.rec_dev_id         = undefined;
+        this.rev_year           = undefined;
 
-        this.channels_count     = null;
-        this.analog_count       = null;
-        this.status_count       = null;
+        this.channels_count     = undefined;
+        this.analog_count       = undefined;
+        this.status_count       = undefined;
 
-        this.analog_channels    = null;  // Array of analog channels
-        this.status_channels    = null;  // Array of status channels
+        this.analog_channels    = undefined;  // Array of analog channels
+        this.status_channels    = undefined;  // Array of status channels
 
-        this.line_frequency     = null;
+        this.line_frequency     = undefined;
 
-        this.nrates             = null;
-        this.samp               = null;
-        this.endsamp            = null;
+        this.nrates             = undefined;
+        this.samp               = undefined;
+        this.endsamp            = undefined;
 
-        this.start_timestamp    = null;
-        this.trigger_timestamp  = null;
+        this.start_timestamp    = undefined;
+        this.trigger_timestamp  = undefined;
 
-        this.file_type          = null;
-        this.ts_mul_fac         = null;
+        this.file_type          = undefined;
+        this.ts_mul_fac         = undefined;
         
         // Read the file to initialize the fields
         this.Read (configFile);
@@ -49,9 +50,9 @@ class Configuration
         // Channel counts
         line = lines[lineIndex++];
         const secondLineParts = line.split(SEPERATOR);
-        this.channels_count     = secondLineParts[0];
-        this.analog_count       = secondLineParts[1].split('A')[0];
-        this.status_count       = secondLineParts[2].split('D')[0];
+        this.channels_count     = parseInt(secondLineParts[0]);
+        this.analog_count       = parseInt(secondLineParts[1].split('A')[0]);
+        this.status_count       = parseInt(secondLineParts[2].split('D')[0]);
 
         // Analog channels
         this.analog_channels = [];
@@ -74,18 +75,18 @@ class Configuration
         // Line frequency
         line = lines[lineIndex++];
         const thirdLineParts = line.split(SEPERATOR);
-        this.line_frequency     = thirdLineParts[0];
+        this.line_frequency     = parseFloat(thirdLineParts[0]);
 
         // Nrate
         line = lines[lineIndex++];
         const fourthLineParts = line.split(SEPERATOR);
-        this.nrates             = fourthLineParts[0];
+        this.nrates             = parseInt(fourthLineParts[0]);
        
         // Samp
         line = lines[lineIndex++];
         const fifthLineParts = line.split(SEPERATOR);
-        this.samp               = fifthLineParts[0];
-        this.endsamp            = fifthLineParts[1];
+        this.samp               = parseFloat(fifthLineParts[0]);
+        this.endsamp            = parseFloat(fifthLineParts[1]);
 
         // Timestamps
         line = lines[lineIndex++];
@@ -101,7 +102,7 @@ class Configuration
         // Time stamp multiplier factor
         line = lines[lineIndex++];
         const eighthLineParts = line.split(SEPERATOR);
-        this.ts_mul_fac         = eighthLineParts[0];
+        this.ts_mul_fac         = parseFloat(eighthLineParts[0]);
 
         // Sanity check
         this.SanityCheck();
@@ -111,15 +112,15 @@ class Configuration
     SanityCheck()
     {
         if (
-            this.rev_year == '' ||
-            this.channels_count == '' ||
-            this.analog_count == '' ||
-            this.status_count == '' ||
-            this.nrates == '' ||
-            this.samp == '' ||
-            this.endsamp == '' ||
-            this.file_type == '' ||
-            this.ts_mul_fac == ''
+            this.rev_year === undefined ||
+            this.channels_count == undefined ||
+            this.analog_count === undefined ||
+            this.status_count === undefined ||
+            this.nrates === undefined ||
+            this.samp === undefined ||
+            this.endsamp === undefined ||
+            this.file_type === undefined ||
+            this.ts_mul_fac === undefined
         ) {
             throw new Error("Error : Error on reading the configuration file.");
         } 
@@ -134,19 +135,19 @@ class AnalogChannel
 {
     constructor(line)
     {
-        this.n         = null;
-        this.ch_id      = null;
-        this.ph         = null;
-        this.ccbm       = null;
-        this.uu         = null;
-        this.a          = null;
-        this.b          = null;
-        this.skew       = null;
-        this.min        = null;
-        this.max        = null;
-        this.primary    = null;
-        this.secondary  = null;
-        this.ps         = null;
+        this.n          = undefined;
+        this.ch_id      = undefined;
+        this.ph         = undefined;
+        this.ccbm       = undefined;
+        this.uu         = undefined;
+        this.a          = undefined;
+        this.b          = undefined;
+        this.skew       = undefined;
+        this.min        = undefined;
+        this.max        = undefined;
+        this.primary    = undefined;
+        this.secondary  = undefined;
+        this.ps         = undefined;
 
         this.Read(line);
     }
@@ -173,15 +174,15 @@ class AnalogChannel
     SanityCheck()
     {
         if(
-            this.an         == '' ||
-            this.uu         == '' ||
-            this.a          == '' ||
-            this.b          == '' ||
-            this.min        == '' ||
-            this.max        == '' ||
-            this.primary    == '' ||
-            this.secondary  == '' ||
-            this.ps         == ''
+            this.n         === undefined ||
+            this.uu         === undefined ||
+            this.a          === undefined ||
+            this.b          === undefined ||
+            this.min        === undefined ||
+            this.max        === undefined ||
+            this.primary    === undefined ||
+            this.secondary  === undefined ||
+            this.ps         === undefined
         )
         {
             throw new Error(": AnalogChannel : Sanity error.");
@@ -197,14 +198,13 @@ class StatusChannel
 {
     constructor(line)
     {
-        this.n         = null;
-        this.ch_id      = null;
-        this.ph         = null;
-        this.ccbm       = null;
-        this.y         = null;
+        this.n         = undefined;
+        this.ch_id     = undefined;
+        this.ph        = undefined;
+        this.ccbm      = undefined;
+        this.y         = undefined;
         
-        this.Read(line);
-        
+        this.Read(line)  
     }
     
     // TODO : Read the line and initialize the fields
@@ -222,8 +222,8 @@ class StatusChannel
     SanityCheck()
     {
         if(
-            this.n         == '' ||
-            this.y         == ''
+            this.n         === undefined ||
+            this.y         === undefined
         )
         {
             throw new Error(": StatusChannel : Sanity error.");
@@ -237,32 +237,35 @@ class StatusChannel
 
 class TimeStamp
 {
-    constructor(time)
+    constructor(time, timeMicroseconds = 0)
     {
         this.time = time;
+        this.timeMicroseconds = timeMicroseconds;
     }
-
+    // Read timestamp from the cfg file
     static fromLine(line)
     {
         const parts = line.split(SEPERATOR);
         const [day, month, year] = parts[0].split('/').map(Number);
         const [hour, minutes, seconds] = parts[1].split(':').map(Number);
-        const time = new Date(year, month, day, hour, minutes, seconds)
-        return new TimeStamp(time);
+        const time = new Date(year, month, day, hour, minutes, seconds);
+        const microseconds = parseInt(seconds%1 * 1e6);
+
+        return new TimeStamp(time, microseconds);
     }
 
-    static fromBuffer(buffer, config) {
-        const timestampValue = buffer.readUInt32LE(0);
-        
-        if (timestampValue === 0xFFFFFFFF) {
-            return new TimeStamp(null);
+    static fromBuffer(buffer, config)
+    {
+        const bufferData = buffer.readUInt32LE(0);
+        if (bufferData == 0xFFFFFFFF)
+        {
+            return new TimeStamp(config.start_timestamp.time, null);
         }
-
-        const timemult = config.ts_mul_fac;
-        const ms = timestampValue * timemult / 1000 + config.start_timestamp.time.getTime();
-        const time = new Date(ms); 
-
-        return new TimeStamp(time);
+        else
+        {
+            const microseconds = buffer.readUInt32LE(0) * config.ts_mul_fac;
+            return new TimeStamp(config.start_timestamp.time, microseconds);
+        }
     }
 }
 
@@ -281,16 +284,17 @@ class Sample
 
    Read(buffer)
    {
-        // Sample number (4 bytes, little-endian)
+        // Sample number                            (4 bytes, little-endian)
         this.sample_number = buffer.readUInt32LE(0);
 
-        // Timestamp (4 bytes, little-endian)
+        // Timestamp                                (4 bytes, little-endian)
         this.timestamp = TimeStamp.fromBuffer(buffer.subarray(4, 8), this.config);
 
-        // Analog channel sample data (2 bytes each)
+        // Analog channel sample data               (2 bytes each)
         let p = 0;
         for (let i = 8; i < 8 + this.config.analog_count * 2; i += 2) {
-            let data = this.config.analog_channels[p].a * buffer.readInt16LE(i) + this.config.analog_channels[p].b;
+            let data = parseFloat(this.config.analog_channels[p].a) * buffer.readInt16LE(i) + parseFloat(this.config.analog_channels[p].b);
+            data = parseFloat(data.toFixed(4));
             this.analog_data.push(data);
             p++;
         }
@@ -311,7 +315,10 @@ class Sample
     {
         // n starts from 1
         const result = {
-            timestamp: this.timestamp,
+            timestamp: {
+                seconds : this.timestamp.time,
+                microseconds: this.timestamp.timeMicroseconds
+            },
             value: this.analog_data[n - 1]
         }
         return result;
@@ -321,7 +328,10 @@ class Sample
     {
         // n starts from 1
         const result = {
-            timestamp: this.timestamp,
+            timestamp: {
+                seconds : this.timestamp.time,
+                microseconds: this.timestamp.timeMicroseconds
+            },
             value: this.status_data[n - 1]
         }
         return result;
@@ -397,4 +407,4 @@ class ComtradeParser
     }
 }
 
-module.exports = {ComtradeParser, TimeStamp};
+module.exports = { ComtradeParser };
