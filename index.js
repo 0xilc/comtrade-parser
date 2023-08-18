@@ -6,7 +6,7 @@ const dat = fs.readFileSync('./data/test3.dat');
 
 try{
     const parser = new ComtradeParser(cfg, dat);
-    let data = parser.getPrettyData();
+    let data = parser.getPrettyData().analogChannels[0].data;
     let parserConfig = parser.config;
     console.log({parserConfig});
 
